@@ -1,3 +1,12 @@
 #dataset
-
 gtsrb_dataset.npz
+
+# jupyter notebook
+.ipynb_checkpoints/
+
+# environment
+deep/
+
+# py files
+tutorial.py
+gtsrb.pyc
