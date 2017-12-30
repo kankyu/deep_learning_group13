@@ -68,3 +68,29 @@ Tensorflow provides **optimisers** that slowly change each variable in order to 
 The simplest optimiser is known as gradient decent.
 It modifies each variable according to the magnitude of the derivate of the loss w.r.t to the variable.
 We are optimising loss function against the variable to find the minimum (like in a levels maths)
+
+#### with block with scopes
+you might be wondering what are with these with blocks.
+It is tensorflow way of sharing variables. Similar to scope in terms of functions and the global. Tensorflow has a similar concept with graphs. The with blocks allow tensorflow to share the variables.
+
+```python
+with tf.variable_scope('scope_name'):
+    tf.Variable(..)
+    tf.get_variable('b', ...) # <-- this allows retrieve the variable from a certain scope
+```
+
+#### logits
+in maths in a particular function
+
+The name appears in the program. For tensorflow: it\s a name that is though to imply that this Tensori is the quantity that is being mapped to probabilities by Softmax. Logics are values to be used as input into softmax.
+
+* **Logit** is a function that maps probabilities [0,1] to [-inf, inf]
+* **Softmax** is a function that maps [-inf, inf] to [0,1] similar to a Sigmoid. But Softmax also normliases the sum of the values (output vector) to be 1.
+* **Tensorflow "with logit"**: Means you are applying a softmax function to logit numers to normalise it. The input_vector (logit) is not normalised and is in the range [-inf,inf]. 
+
+This normalisation is usd for multiclass classification problems. And for multilabel classification problems sigmoid normisation is used i.e
+```python
+tf.nn.sigmoid_cross_entropy_with_logits
+```
+
+
