@@ -38,9 +38,6 @@ tf.app.flags.DEFINE_integer('img-height', 32, 'Image height (default: %(default)
 tf.app.flags.DEFINE_integer('img-channels', 3, 'Image channels (default: %(default)d)')
 tf.app.flags.DEFINE_integer('num-classes', 43, 'Number of classes (default: %(default)d)')
 
-sess = tf.InteractiveSession()
-
-
 def main():
     # clear graph
     tf.reset_default_graph()
@@ -134,11 +131,9 @@ def deep_nn(x_image, class_count):
             name = 'pool2'
             )
 
-    pool2.eval()
-    exit()
-    
+    tf.print(pool2) 
     # dense layer, i'm not how to determine the size.
-    #pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64], name='pool2_flattenned')
+    pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64], name='pool2_flattened')
     
     # fully connected layer 1
     # unit? look up
