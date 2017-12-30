@@ -10,3 +10,5 @@ deep/
 # py files
 tutorial.py
 gtsrb.pyc
+
+submit_job.sh
