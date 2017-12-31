@@ -65,6 +65,7 @@ for x_train, y_train in batch_generator(data, 'train'):
         pass
 
 def main(_):
+
     # clear graph
     tf.reset_default_graph()
 
@@ -96,11 +97,6 @@ def main(_):
         # reduce the learning rate every step
         decayed_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
                                                             decay_steps, decay_rate, staircase=True)
-
-        sess.run( 
-
-
-        
 
 def deep_nn(x_image, class_count):
     """ model for our CNN """
@@ -185,3 +181,4 @@ def deep_nn(x_image, class_count):
         
 if __name__ == '__main__':
     tf.app.run(main=main)
+    print('program complete')

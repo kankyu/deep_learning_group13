@@ -12,3 +12,6 @@ tutorial.py
 gtsrb.pyc
 
 submit_job.sh
+tmp.py
+*.err
+*.out
