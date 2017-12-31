@@ -8,7 +8,13 @@ import os
 import numpy as np
 import tensorflow as tf
 
+from gtsrb import batch_generator
+
+from tensorflow.python import debug as tf_debug
+
+
 here = os.path.dirname(__file__)
+print(here)
 
 dataset_file = 'gtsrb_dataset.npz'
 data = np.load(dataset_file)
@@ -38,28 +44,42 @@ tf.app.flags.DEFINE_integer('img-height', 32, 'Image height (default: %(default)
 tf.app.flags.DEFINE_integer('img-channels', 3, 'Image channels (default: %(default)d)')
 tf.app.flags.DEFINE_integer('num-classes', 43, 'Number of classes (default: %(default)d)')
 
-sess = tf.InteractiveSession()
+sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 
+# Arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--production', default=False,
+                help='if you give the argument True then you load in the whole dataset i.e. -p True',
+                dest='production', nargs='?')
+args = parser.parse_args()
 
-def main():
+for x_train, y_train in batch_generator(data, 'train'):
+    if not args.production:
+        x_image = x_train
+        y_train = y_train
+        # use one batch for building quicker
+        # run main
+        break
+    else:
+        # run main
+        pass
+
+def main(_):
     # clear graph
     tf.reset_default_graph()
 
-    for x_train, y_train in batch_generator(data, 'train'):
-        pass
-
     # Build the graph
     with tf.name_scope('inputs'):
-        x = tf.placeholder(tf.float32, shape=[None, Flags.image_width * Flags.image_height * Flags.image_channel])
+        x = tf.placeholder(tf.float32, shape=[None, FLAGS.image_width * FLAGS.image_height * FLAGS.image_channel])
         
         # for batch_size is dynamically computed based input values
         x_image = tf.reshape(x, [-1, 32, 32, 3])
 
         # what is class count, i think its the len of the vector
-        y_ = tf.placeholder(tf.float32, shape=[None, Flag.num_classes]
+        y_ = tf.placeholder(tf.float32, shape=[None, FLAGS.num_classes])
 
     with tf.variable_scope('model'):
-        logits = deep_nn(x_image, Flag.num_classes)
+        logits = deep_nn(x_image, FLAGS.num_classes)
         
         # https://deepnotes.io/softmax-crossentropy
         # cross_entropy 
@@ -74,10 +94,10 @@ def main():
         decay_rate = 0.8 # the base of our exponential for the decay
         global_step = tf.Variable(0, trainable=False) # incremented by Tensorflow
         # reduce the learning rate every step
-        decayed_learning_rate = tf.train.exponential_decay(Flags.learning_rate, global_step,
+        decayed_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
                                                             decay_steps, decay_rate, staircase=True)
 
-        
+        sess.run( 
 
 
         
@@ -98,7 +118,7 @@ def deep_nn(x_image, class_count):
         )
 
     # normalise batch
-    conv1_bn = tf.layers.batch_normalization(conv1, name=conv1_bn)
+    conv1_bn = tf.layers.batch_normalization(conv1, name='conv1_bn')
     # apply activation 
     conv1_bn = tf.nn.relu(conv1_bn)
 
@@ -122,7 +142,7 @@ def deep_nn(x_image, class_count):
             )
 
     # normalise batch
-    conv2_bn = tf.layers.batch_normalization(conv2, name=conv2_bn)
+    conv2_bn = tf.layers.batch_normalization(conv2, name='conv2_bn')
     # apply activation 
     conv2_bn = tf.nn.relu(conv2_bn)
 
@@ -134,11 +154,11 @@ def deep_nn(x_image, class_count):
             name = 'pool2'
             )
 
-    pool2.eval()
-    exit()
+    # tf.print(pool2.shape)
+    # tf.print(pool2)
     
     # dense layer, i'm not how to determine the size.
-    #pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64], name='pool2_flattenned')
+    pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64], name='pool2_flattened')
     
     # fully connected layer 1
     # unit? look up
@@ -164,4 +184,4 @@ def deep_nn(x_image, class_count):
 
         
 if __name__ == '__main__':
-    tf.app.run()
+    tf.app.run(main=main)
