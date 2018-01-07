@@ -93,4 +93,154 @@ This normalisation is usd for multiclass classification problems. And for multil
 tf.nn.sigmoid_cross_entropy_with_logits
 ```
 
+---
+### basics of tensorflow
 
+**computational graph**
+Tensorflow uses a series of computations as a flow of data through a graph.
+* nodes being computation units
+* edges being the flow of Tensors (multidimensional arrays)
+* Tensorflow builds the computation graph before it starts execution (it follows the principles of lazy programming - computation when absolutely necessary) 
+* The graph is not executed when the nodes are defined. After the graph is assembled, it is deplyoyed and executed in a **Session**.
+* The *session* is the run time environment we are familiar with a typical execution of a python program.
+* **Tensorboard** is very useful to visualise and debug since we are able to see every node (computation unit) and Tensor (edge)
+
+**Tensorflow is a low level library**
+What I mean by low level is that it comes with features that allows us to build architectures, rather than supplying the architectures themselves.
+* Tensorflow is like numpy (operations) rather than scikit-learn (a toolbox of algorithms that has already been created by *numpy*)
+* Tensorflow provides us with some very simple operators (very much like numpy) but was build to efficiently deal with Tensors
+
+**Auto differentiation**
+* A powerful tool used frequently in deep learning.
+* It gives the user the ability to automatically calculate derivatives
+* Tensorflow efficiently calculates derivatives from the computation graph by using chain rule, where every node node has an attached gradient operation which calculates derivatives of input w.r.t. the output.
+* Gradients w.r.t. the parameters are calculated automatically during backpropagation.
+
+### Understanding the computation graph
+Essentially, Tensorflow computation graph contains the following parts:
+**ingredients for our computational graph (before execution)**
+1. **placeholders**, variables used in place of inputs to feed to the graph
+2. **Variables**, model variables that are going to be *optimised* to make the model perform better
+3. **Model**, a mathematical function that calculates a output based on the placeholder and model variables. i.e. Model(placeholder, Variables) -> someoutput.
+4. **Loss Measure**, guide for optimisation for model variables (the criteria in which the model should be minimising aka. minimising the loss function)
+5. **Optimisation Method**, update method for tuning model variables, (how should we update the Variables during the tuning (i.e. during the minimising loss values)
+
+### things to note
+* while defining the graph i.e. coding the architecture. The graph is not executed which means there is no data manipulation. Only building the nodes and symbols inside our graph.
+* we do not create the graph strucutre explicitly in our programs. New nodes are automatially build into the underlying graph. we can use
+```python
+tf.get_default_graph().get_operations() # see all the nodes in default graph
+# we can probably get more info in the api for
+tf.get_default_graph()
+```
+
+### more about Session
+After building your computational graph. The next thing to do is to execute it.
+* Session is a binding to a particular execution enviroment (CPU or GPU). A session object creates a runtime where operation nodes are executed and tensors are evaluated.
+
+
+create Session object
+```python
+sess = tf.Session()
+```
+
+Initialise the variables
+```python
+sess.run(tf.global_variables_initializer())
+```
+We need to initialise the variables as we only assign real values to the variables once we are in runtime (i.e. after the session is created.)
+
+**The run method**
+The run method of Session object evaluates the output of a node of the graph. It takes two arguments:
+```python
+sess.run(fetches, feeds)
+```
+`fetches` is a list of graph nodes that are evaluated. The Session returns the output of these nodes.
+
+`feeds` are the Dictionary mappings from graph nodes to concrete values. Feed Dictionaries specify the value of each Placeholder required by the node to manipulate the data.
+In order words, ...
+* The name of the keys of Feed Dictionaryies should be the same as the *Placeholders*.
+
+
+### Visualisation using TensorBoard
+* To allow for visualisation, we first have to create a FileWriter object for visualising the training logs, which need to be stored before utilising TensorBoard.
+```python
+writer = tf.summary.FileWriter('./graphs', graph=tf.get_default_graph())
+```
+Storing our logs to `./graphs` directory.
+
+**Logging dynamic values**
+* the fluctuating loss values and accurary.
+* parameters
+
+for scalars:
+```python
+tf.summary.scalar("loss", loss)
+tf.summary.scalar("accuracy", accuracy)
+```
+
+For parameters, we can create histogram (can't we use something other than histogram?) summaries:
+```python
+tf.summary.histogram("weights", weights)
+tf.summary.histogram("biases", biases)
+```
+These histograms diaplyar the occurence of number of values relative to other value.
+They are *very helpful* in studying the distribution of a parameter values over time.
+
+**Merging Summary Operations**
+We can merge these summary operations so that they can be *executed as a single operation* inside the session
+```python
+summary_op = tf.summary.merge_all()`
+```
+
+**Running and logging the summary operation**
+After merging the summaries, we can run the Summary operation inside the session, and write its output to our FileWriter.
+Note that `i` is the iteration index inside the training loop (training step)
+```python
+_, summary = sess.run([train_step, summary_op], feed_dict)
+writer.add_summary(summary, i)
+```
+
+### Making the graph readable
+By default the graph looks very messy
+
+You are able to label the graph by adding a name scope to nodes
+```python
+with tf.name_scope('LinearModel'):
+    logits = tf.matmul(x, weights) + biases
+    y_pred = tf.nn.softmax(logits)
+```
+This will annotate the graph nodes (box them and put a label) and makes the graph readable.
+* you can always click on the `+` to view the full underlying graph.
+* It's essentially a code folding mechanism but for graphs
+
+We can also name our placeholder and variable nodes:
+```python
+x = tf.placeholder(tf.float32, [None, 784, name='x'))
+y_true = tf.placeholder(tf.float32, [None,10], name='labels')
+
+weights= tf.Variable(tf.random_uniform([784,10],-1,1), name='weights')
+biases = tf.Variable(tf.zeros([10], name='biases')
+```
+![alt text](https://user-images.githubusercontent.com/11167307/34468284-ba2e1dba-eefd-11e7-8473-42c2e83397c9.png)
+
+### Resources for Tensorflow
+[https://www.slideshare.net/tw_dsconf/tensorflow-tutorial](https://www.slideshare.net/tw_dsconf/tensorflow-tutorial)
+
+
+
+
+
+
+
+
+
+
+
+
+
+### How to activate tensorboard
+I will most likely have to activate tensorboard on my home pc. To see the build of my computational graph.
+Since this doesn't require any execution I should be okay.
+
+[source](https://deepnotes.io/tensorflow)
