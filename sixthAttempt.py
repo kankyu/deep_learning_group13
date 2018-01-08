@@ -130,8 +130,10 @@ def whitening(image):
 def main(_):
     tf.reset_default_graph()
 
+    print('hello world')
+
     #Import Data
-    #data = np.load('gtsrb_dataset.npz')
+    batch_data = np.load('gtsrb_dataset.npz')
     data = pickle.load(open('dataset.pkl', 'rb'))
 
     with tf.variable_scope('inputs'):
@@ -155,9 +157,9 @@ def main(_):
 
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
         
-        weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')[0]
-        weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')[0]
-        weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')[0]
+        weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')
+        weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')
+        weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')
        
         #weight_decay = tf.constant(0.0001, dtype=tf.float32) # your weight decay rate, must be a scalar tensor.
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
@@ -187,7 +189,7 @@ def main(_):
         #Training for one epoch using 392 batches of size 100
         step = 0
         
-        weight = sess.run([weight1, weight2, weight3])
+        weight = sess.run([weights1, weights2, weights3])
         print(weight)
 
         # Setup the validation images and labels
@@ -196,7 +198,7 @@ def main(_):
         validation_labels = [data_validation[i][1] for i in range(0, 12630)]
 
         for i in range(FLAGS.training_epochs):
-            train = batch_generator(data,'train')
+            train = batch_generator(batch_data,'train')
             for (train_images, train_labels) in train:
                 _, train_summary_str = sess.run([train_step, train_summary],
                                                 feed_dict={x_image: train_images, y_: train_labels})
