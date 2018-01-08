@@ -54,12 +54,17 @@ def deepnn(x_image, class_count=43):
       classifying the object images into one of 43 classes
       (specific roadsign, another roadsign, etc)
     """
-
+    
+    initializer = tf.initializers.random_uniform(minval=-0.05,
+    maxval=0.05)
+    #initializer = tf.contrib.layers.xavier_initializer()
+    
     # First convolutional layer - maps one RGB image to 32 feature maps.
     conv1 = tf.layers.conv2d(
         inputs=x_image,
         filters=32,
         kernel_size=[5, 5],
+        kernel_initializer=initializer,
         strides=1,
         padding='same',
         name='conv1'
@@ -77,6 +82,7 @@ def deepnn(x_image, class_count=43):
         inputs=pool1,
         filters=32,
         kernel_size=[5, 5],
+        kernel_initializer=initializer,
         strides=1,
         padding='same',
         name='conv2'
@@ -94,6 +100,7 @@ def deepnn(x_image, class_count=43):
         inputs=pool2,
         filters=64,
         kernel_size=[5, 5],
+        kernel_initializer=initializer,
         strides=1,
         padding='same',
         name='conv3'
@@ -117,7 +124,7 @@ def deepnn(x_image, class_count=43):
 
 def whitening(image):
     """ subtract the mean and standard deviation """
-    return tf.per_image_standardization(image)
+    return tf.image.per_image_standardization(image)
     
 def main(_):
     tf.reset_default_graph()
@@ -134,6 +141,11 @@ def main(_):
         
         # subtract the mean and deviation 
         x_image = tf.map_fn(lambda x: whitening(x), x_image)
+        
+        
+        # maybe we will need this.
+        # weight = tf.Variable(<initial-value>, name='Weight')
+
 
     with tf.variable_scope('model'):
         logits = deepnn(x_image)
@@ -143,11 +155,14 @@ def main(_):
         correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y_, 1))
 
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
+        
+        # Decay learning rate
         global_step = tf.Variable(0, trainable=False)
-        
-        
+        decay_steps = 1000  # decay the learning rate every 1000 steps
+        decay_rate = 0.8  # the base of our exponential for the decay
+        decayed_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step, decay_steps, decay_rate, staircase=True)
 
-        train_step = tf.train.MomentumOptimizer(learning_rate=FLAGS.learning_rate,
+        train_step = tf.train.MomentumOptimizer(learning_rate=decayed_learning_rate,
                                                 momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
 
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
