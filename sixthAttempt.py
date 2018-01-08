@@ -55,6 +55,7 @@ def deepnn(x_image, class_count=43):
       (specific roadsign, another roadsign, etc)
     """
 
+    #Initializations define the way to set the initial random weights to the layers
     initializer = tf.random_uniform_initializer(minval=-0.05,
     maxval=0.05)
     #initializer = tf.contrib.layers.xavier_initializer()
@@ -154,10 +155,10 @@ def main(_):
 
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
         
-        #weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')[0]
-        #weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')[0]
-        #weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')[0]
-        
+        weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')[0]
+        weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')[0]
+        weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')[0]
+       
         #weight_decay = tf.constant(0.0001, dtype=tf.float32) # your weight decay rate, must be a scalar tensor.
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
         #https://stackoverflow.com/questions/36570904/how-to-define-weight-decay-for-individual-layers-in-tensorflow/36573850#36573850
@@ -184,6 +185,9 @@ def main(_):
 
         #Training for one epoch using 392 batches of size 100
         step = 0
+        
+        weight = sess.run([weight1, weight2, weight3])
+        print(weight)
 
         # Setup the validation images and labels
         data_validation = data[1]
