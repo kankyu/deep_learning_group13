@@ -130,8 +130,8 @@ def main(_):
     tf.reset_default_graph()
 
     #Import Data
-    data = np.load('gtsrb_dataset.npz')
-    #data = pickle.load(open('dataset.pkl', 'rb'))
+    #data = np.load('gtsrb_dataset.npz')
+    data = pickle.load(open('dataset.pkl', 'rb'))
 
     with tf.variable_scope('inputs'):
         # Create the model
@@ -161,7 +161,8 @@ def main(_):
         #weight_decay = tf.constant(0.0001, dtype=tf.float32) # your weight decay rate, must be a scalar tensor.
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
         #https://stackoverflow.com/questions/36570904/how-to-define-weight-decay-for-individual-layers-in-tensorflow/36573850#36573850
-        
+       
+        global_step = tf.Variable(0, trainable=False)  # this will be incremented automatically by tensorflow 
         train_step = tf.train.MomentumOptimizer(learning_rate=FLAGS.learning_rate, momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
 
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
