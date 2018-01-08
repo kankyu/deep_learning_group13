@@ -16,12 +16,12 @@ import cPickle as pickle
 
 FLAGS = tf.app.flags.FLAGS
 
-
+# tilo said to use 45 epochs because that is what all the figures have
 tf.app.flags.DEFINE_integer('training-epochs', 45,
                             'Maximum number of training epochs to train. (default: %(default)d)')
 tf.app.flags.DEFINE_integer('batch-size', 100, 'Number of examples per mini-batch (default: %(default)d)')
 # all figures use 45 epochs and tilo said in forum to stop after 45 epochs
-#45*393
+#45*393=17685
 tf.app.flags.DEFINE_integer('max-steps', 17685,
                             'Number of mini-batches to train on. (default: %(default)d)')
 tf.app.flags.DEFINE_integer('log-frequency', 50,
@@ -115,7 +115,10 @@ def deepnn(x_image, class_count=43):
     logits = tf.layers.dense(inputs=fc2, units=class_count, name='logit')
     return logits
 
-
+def whitening(image):
+    """ subtract the mean and standard deviation """
+    return tf.per_image_standardization(image)
+    
 def main(_):
     tf.reset_default_graph()
 
@@ -128,6 +131,9 @@ def main(_):
         x = tf.placeholder(tf.float32, [None, FLAGS.img_width * FLAGS.img_height * FLAGS.img_channels])
         x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
         y_ = tf.placeholder(tf.float32, [None, FLAGS.num_classes])
+        
+        # subtract the mean and deviation 
+        x_image = tf.map_fn(lambda x: whitening(x), x_image)
 
     with tf.variable_scope('model'):
         logits = deepnn(x_image)
@@ -138,6 +144,8 @@ def main(_):
 
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
         global_step = tf.Variable(0, trainable=False)
+        
+        
 
         train_step = tf.train.MomentumOptimizer(learning_rate=FLAGS.learning_rate,
                                                 momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
@@ -166,7 +174,7 @@ def main(_):
         # Setup the validation images and labels
         data_validation = data[1]
         validation_images = [data_validation[i][0] for i in range(0, 12630)]
-        validation_labels = [data_validation[i][1] for i in range(0,12630)]
+        validation_labels = [data_validation[i][1] for i in range(0, 12630)]
 
         for i in range(FLAGS.training_epochs):
             train = batch_generator(data,'train')
@@ -208,7 +216,7 @@ def main(_):
 
         data_test = data[1]
         test_images = [data_test[i][0] for i in range(0, 12630)]
-        test_labels = [data_test[i][1] for i in range(0,12630)]
+        test_labels = [data_test[i][1] for i in range(0, 12630)]
         test_accuracy, _ = sess.run([accuracy, test_summary], feed_dict={x_image: test_images, y_: test_labels})
 
 
@@ -226,7 +234,6 @@ def main(_):
 
         train_writer.close()
         validation_writer.close()
-
 
 if __name__ == '__main__':
     tf.app.run(main=main)
