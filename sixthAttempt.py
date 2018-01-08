@@ -130,8 +130,10 @@ def whitening(image):
 def main(_):
     tf.reset_default_graph()
 
+    print('hello world')
+
     #Import Data
-    batch   _data = np.load('gtsrb_dataset.npz')
+    batch_data = np.load('gtsrb_dataset.npz')
     data = pickle.load(open('dataset.pkl', 'rb'))
 
     with tf.variable_scope('inputs'):
@@ -174,7 +176,8 @@ def main(_):
        
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
         #https://stackoverflow.com/questions/36570904/how-to-define-weight-decay-for-individual-layers-in-tensorflow/36573850#36573850
-        
+       
+        global_step = tf.Variable(0, trainable=False)  # this will be incremented automatically by tensorflow 
         train_step = tf.train.MomentumOptimizer(learning_rate=FLAGS.learning_rate, momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
 
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
@@ -198,7 +201,7 @@ def main(_):
         #Training for one epoch using 392 batches of size 100
         step = 0
         
-        weight = sess.run([weight1, weight2, weight3])
+        weight = sess.run([weights1, weights2, weights3])
         print(weight)
 
         # Setup the validation images and labels
