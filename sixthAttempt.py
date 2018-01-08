@@ -55,7 +55,7 @@ def deepnn(x_image, class_count=43):
       (specific roadsign, another roadsign, etc)
     """
 
-    initializer = tf.initializers.random_uniform(minval=-0.05,
+    initializer = tf.random_uniform_initializer(minval=-0.05,
     maxval=0.05)
     #initializer = tf.contrib.layers.xavier_initializer()
     
@@ -153,13 +153,16 @@ def main(_):
         correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y_, 1))
 
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
-        # Decay learning rate
-        global_step = tf.Variable(0, trainable=False)
-        decay_steps = 1000  # decay the learning rate every 1000 steps
-        decay_rate = 0.8  # the base of our exponential for the decay
-        decayed_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step, decay_steps, decay_rate, staircase=True)
-
-        train_step = tf.train.MomentumOptimizer(learning_rate=decayed_learning_rate, momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
+        
+        #weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')[0]
+        #weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')[0]
+        #weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')[0]
+        
+        #weight_decay = tf.constant(0.0001, dtype=tf.float32) # your weight decay rate, must be a scalar tensor.
+        #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
+        #https://stackoverflow.com/questions/36570904/how-to-define-weight-decay-for-individual-layers-in-tensorflow/36573850#36573850
+        
+        train_step = tf.train.MomentumOptimizer(learning_rate=FLAG.learning_rate, momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
 
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
     accuracy_summary = tf.summary.scalar("Accuracy", accuracy)
