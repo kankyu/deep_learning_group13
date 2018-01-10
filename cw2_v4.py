@@ -199,9 +199,6 @@ def main(_):
         weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')
        
        
-        sess = tf.Session()
-        a = sess.run([weights1, weights2, weights3])
-        print(a)
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
         #https://stackoverflow.com/questions/36570904/how-to-define-weight-decay-for-individual-layers-in-tensorflow/36573850#36573850
         
@@ -253,6 +250,10 @@ def main(_):
                 _, train_summary_str = sess.run([train_step, train_summary],
                                                 feed_dict={x_image: train_images, y_: train_labels})
 
+                #### Andrew's code
+                a = sess.run([weights1, weights2, weights3])
+                print(a)
+                
                 step += 1
                 last_valid = 0
                 # Validation: Monitoring accuracy using validation set
