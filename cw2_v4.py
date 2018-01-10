@@ -182,27 +182,33 @@ def main(_):
         # add all the variables you want to add weight decay to, to a collection name 'variables' 
         # and then you calculate the L2 norm weight decay for the whole collection. 
         # create variable as a collection of weights
-        weights =  tf.get_variable('weights', collections=['weights'])
+        
+        
+        # weights =  tf.get_variable('weights', collections=['weights'])
         weight_decay = tf.constant(0.0001, dtype=tf.float32) # your weight decay rate, must be a scalar tensor.
         
-        weights_norm = tf.reduce_sum(
-            input_tensor= weight_decay * tf.stack(
-                [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
-            ),
-            name='weights_norm'
-        )
+        # weights_norm = tf.reduce_sum(
+        #   input_tensor= weight_decay * tf.stack(
+                # [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
+            # ),
+            # name='weights_norm'
+        # )
             
         weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')
         weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')
         weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')
        
+       
+        sess = tf.Session()
+        a = sess.run([weights1, weights2, weights3])
+        print(a)
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
         #https://stackoverflow.com/questions/36570904/how-to-define-weight-decay-for-individual-layers-in-tensorflow/36573850#36573850
         
         # with L2 test 2 (think this works)
-        trainable_vars   = tf.trainable_variables() # should be weight alone
-        lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in trainable_vars if 'bias' not in v.name ]) * weight_decay_factor
-        cost = (tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv)) + lossL2)
+        # trainable_vars   = tf.trainable_variables() # should be weight alone
+        # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in trainable_vars if 'bias' not in v.name ]) * weight_decay_factor
+        # cost = (tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv)) + lossL2)
         
         
         
