@@ -153,7 +153,6 @@ def main(_):
     tf.reset_default_graph()
 
     #Import Data
-    #data = np.load('gtsrb_dataset.npz')
     data = pickle.load(open('dataset.pkl', 'rb'))
     train = data[0]
     train_images = [train[i][0] for i in range(0,39209)]
@@ -189,9 +188,9 @@ def main(_):
         
         # weights_norm = tf.reduce_sum(
         #   input_tensor= weight_decay * tf.stack(
-                # [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
-            # ),
-            # name='weights_norm'
+        #         [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
+        #     ),
+        #     name='weights_norm'
         # )
             
         weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')
@@ -204,7 +203,7 @@ def main(_):
         
         # with L2 test 2 (think this works)
         # trainable_vars   = tf.trainable_variables() # should be weight alone
-        # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in trainable_vars if 'bias' not in v.name ]) * weight_decay_factor
+        # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in trainable_vars if 'bias' not in v.name ]) * weight_decay
         # cost = (tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv)) + lossL2)
         
         
@@ -252,7 +251,7 @@ def main(_):
 
                 #### Andrew's code
                 a = sess.run([weights1, weights2, weights3])
-                print(a)
+                print(a)    
                 
                 step += 1
                 last_valid = 0
