@@ -195,6 +195,25 @@ def calculate_mean_std(images):
 
     return mean, std
 
+def decrease(n_steps=5):
+    """ 
+    n_steps number of consecutive steps accuracy has decreased.
+    condition in which we want the learning rate to decay
+    returns: boolean
+    """
+    
+    """ old method
+    if (validation_accuracy - prev_validation_accuracy) <= 0:  and num_learning_rate_decreases < 3:
+        # check accuracy is no longer improving / getting worse
+        # decrease the learning rate 
+        # don't decrease the learning rate anymore than 3 times
+        num_learning_rate_decreases +=1
+        FLAGS.learning_rate = FLAGS.learning_rate/10
+                  
+    prev_validation_accuracy = validation_accuracy
+    """
+    pass
+
 def main(_):
     tf.reset_default_graph()
 
@@ -234,7 +253,7 @@ def main(_):
     #learning_rate_summary = tf.summary.scalar("Learning Rate", decayed_learning_rate)
     #img_summary = tf.summary.image('Input Images', x_image)
 
-# summaries
+    # summaries
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
     accuracy_summary = tf.summary.scalar("Accuracy", accuracy)
     # learning_rate_summary = tf.summary.scalar("Learning Rate", FLAGS.learning_rate)
@@ -275,9 +294,13 @@ def main(_):
         # lets not whiten the validation for now
         # whiten validation images
         # validation_images = whitening(validation_images, train_mean, train_std)
-        prev_validation_accuracy = 0
         num_learning_rate_decreases = 0
-
+        
+        # Number of values to avg for decay rate. I think this can be better explained.
+        num_avg = 3 
+        prev_validation_accuracy = np.zeros(num_avg)
+        validation_acc = np.zeros(num_avg)
+                
         for _ in range(FLAGS.training_epochs):
             train = batch_generator(data,'train')
             for train_images, train_labels in train:
@@ -316,18 +339,18 @@ def main(_):
                     validation_accuracy, validation_summary_str = sess.run([accuracy, validation_summary],
                                                                             feed_dict={x_image: validation_images, y_: validation_labels})
                     
+                    validation_acc[step % num_avg] = validation_accuracy
+                    
                     #batch_count += 1
                     #validation_accuracy += validation_accuracy_temp
                     #validation_accuracy = validation_accuracy / batch_count
                         
-                    if (validation_accuracy - prev_validation_accuracy) <= 0 and num_learning_rate_decreases < 3:
-                        # check accuracy is no longer improving / getting worse
-                        # decrease the learning rate 
-                        # don't decrease the learning rate anymore than 3 times
-                        num_learning_rate_decreases +=1
+                    if np.mean(validation_acc - prev_validation_accuracy) <= 0 and num_learning_rate_decreases < 3:
+                        # check if it has been decreasing on average of 5 steps
+                        num_learning_rate_decreases += 1
                         FLAGS.learning_rate = FLAGS.learning_rate/10
                   
-                    prev_validation_accuracy = validation_accuracy
+                    prev_validation_accuracy[step % num_avg] = validation_accuracy
 
                     print('step {}, accuracy on validation set : {}'.format(step, validation_accuracy))
                     validation_writer.add_summary(validation_summary_str, step)
