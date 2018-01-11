@@ -127,13 +127,14 @@ def whitening(image, mean, std):
     """ 
     subtract the mean divide by standard deviation
     img_whitten = (image-mean)/std
+    Depracated
     """
     a = np.array(image)
     img_whiten = np.divide(np.subtract(a, mean), std)
     return img_whiten
 
-def calculate_mean_std(train_imgs):
-    a = np.array(train_imgs)
+def calculate_mean_std(images):
+    a = np.array(images)
     b = a.sum(axis=0)
     c = b.sum(axis=0)
     d = c.sum(axis=0)
@@ -159,6 +160,12 @@ def main(_):
 
     # Calculate rgb tuple of mean and std
     train_mean, train_std = calculate_mean_std(train_images)
+    
+    print(train[0][0][0][0])
+    print('------------')
+    print(train_images[0][0][0])
+    exit()
+    
 
     with tf.variable_scope('inputs'):
         # Create the model
@@ -193,9 +200,11 @@ def main(_):
         #     name='weights_norm'
         # )
             
-        weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')
-        weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')
-        weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')
+            
+        # the weights are not working...
+        # weights1 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv1/kernel')
+        # weights2 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv2/kernel')
+        # weights3 = tf.get_collection(tf.GraphKeys.VARIABLES, 'conv3/kernel')
        
        
         #W = tf.get_variable(name='weight', shape=[4, 4, 256, 512], regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
@@ -213,23 +222,31 @@ def main(_):
         train_step = tf.train.MomentumOptimizer(learning_rate=FLAGS.learning_rate,
                                                 momentum=0.9).minimize(loss=cross_entropy, global_step=global_step)
 
+    # summaries
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
     accuracy_summary = tf.summary.scalar("Accuracy", accuracy)
-    #learning_rate_summary = tf.summary.scalar("Learning Rate", decayed_learning_rate)
+    # learning_rate_summary = tf.summary.scalar("Learning Rate", FLAGS.learning_rate)
     img_summary = tf.summary.image('Input Images', x_image)
-
-    # Summaries for TensorBoard visualisation
+    
     train_summary = tf.summary.merge([loss_summary, accuracy_summary, img_summary])
     validation_summary = tf.summary.merge([loss_summary, accuracy_summary])
-    test_summary = tf.summary.merge([img_summary, accuracy_summary])
+    # test_summary = tf.summary.merge([img_summary, accuracy_summary])
+    # test_summary = tf.summary.merge([test_img_summary])
 
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
 
     with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+       
+       
+        # define summaries for tf.summary.FileWriter 
         train_writer = tf.summary.FileWriter(run_log_dir + "_train", sess.graph)
         validation_writer = tf.summary.FileWriter(run_log_dir + "_validation", sess.graph)
+        # white_image_train_writer = tf.summary.FileWriter(run_log_dir + "_train_white", sess.graph)
+        # test_writer = tf.summary.FileWriter(run_log_dir + "_test", sess.graph)
 
-        sess.run(tf.global_variables_initializer())
+        
+        # test and validation
 
         #Training for one epoch using 392 batches of size 100
         step = 0
@@ -246,12 +263,13 @@ def main(_):
             train = batch_generator(data,'train')
             for (train_images, train_labels) in train:
                 train_images = whitening(train_images, train_mean, train_std)
+                
                 _, train_summary_str = sess.run([train_step, train_summary],
                                                 feed_dict={x_image: train_images, y_: train_labels})
 
                 #### Andrew's code
-                a = sess.run([weights1, weights2, weights3])
-                print(a)    
+                # a = sess.run([weights1, weights2, weights3])
+                # print(a)   
                 
                 step += 1
                 last_valid = 0
@@ -289,13 +307,18 @@ def main(_):
 
 
 
-        test_accuracy = 0
-        #batch_count = 0
+
 
         data_test = data[1]
         test_images = [data_test[i][0] for i in range(0, 12630)]
         test_images = whitening(test_images, train_mean, train_std)
         test_labels = [data_test[i][1] for i in range(0,12630)]
+        
+        
+        
+        test_accuracy = 0
+        #batch_count = 0
+        
         test_accuracy, _ = sess.run([accuracy, test_summary], feed_dict={x_image: test_images, y_: test_labels})
 
 
