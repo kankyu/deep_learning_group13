@@ -15,6 +15,7 @@ from gtsrb import batch_generator
 import cPickle as pickle
 
 FLAGS = tf.app.flags.FLAGS
+DEBUG = False
 
 
 tf.app.flags.DEFINE_integer('training-epochs', 45,
@@ -236,6 +237,8 @@ def main(_):
        
        
         # define summaries for tf.summary.FileWriter 
+        # adv_x_summary = tf.summary.image('Adversarial Images', adv_x) image not defined don't use for now
+
         train_writer = tf.summary.FileWriter(run_log_dir + "_train", sess.graph)
         validation_writer = tf.summary.FileWriter(run_log_dir + "_validation", sess.graph)
         white_image_train_writer = tf.summary.FileWriter(run_log_dir + "_train_white", sess.graph)
@@ -256,10 +259,8 @@ def main(_):
         
         # lets not whiten the validation for now
         # whiten validation images
-        # validation_mean, validation_std = calculate_mean_std(validation_images)
         # validation_images = whitening(validation_images, train_mean, train_std)
-        # validation_images = whitening(validation_images, validation_mean, validation_std)
-
+        prev_validation_accuracy = 0
 
         for _ in range(FLAGS.training_epochs):
             train = batch_generator(data,'train')
@@ -267,17 +268,19 @@ def main(_):
                 
                 train_images_whiten = whitening(train_images, train_mean, train_std)
                 
-                print(train_images[0][0][0])
-                print('-----')
-                print(train_images_whiten[0][0][0])
-                print('another image')
+                if DEBUG:
+                    # check if whitening is working
+                    print(train_images[0][0][0])
+                    print('-----')
+                    print(train_images_whiten[0][0][0])
+                    print('another image')
                 
                 _, train_summary_str = sess.run([train_step, train_summary],
                                                 feed_dict={x_image: train_images, y_: train_labels})
                 
-                _, train_summary_whiten_str = sess.run([train_step, train_summary]),
-                                                feed_dict={x: train_images_whiten, y_: train_labels})
-
+                _, train_summary_whiten_str = sess.run([train_step, train_summary],
+                                                feed_dict={x_image: train_images_whiten, y_: train_labels})
+                                                
                 # havne't implemented weight decay yet I need to see the weight variable value first before implementing decay
                 # a = sess.run([weights1, weights2, weights3])
                 # print(a)   
@@ -290,25 +293,29 @@ def main(_):
                     #batch_count = 0
                     #validation = batch_generator(data, 'test')
                     #for (test_images, test_labels) in validation:
-
-                    prev_validation_accuracy = validation_accuracy
                     
+
                     train_writer.add_summary(train_summary_str, step) 
                     white_image_train_writer.add_summary(train_summary_whiten_str, step)
                     
                     validation_accuracy, validation_summary_str = sess.run([accuracy, validation_summary],
                                                                             feed_dict={x_image: validation_images, y_: validation_labels})
+                    
                     #batch_count += 1
                     #validation_accuracy += validation_accuracy_temp
                     #validation_accuracy = validation_accuracy / batch_count
-                    
+                        
                     if (validation_accuracy - prev_validation_accuracy) <= 0 and num_learning_rate_decreases < 3:
-                    # check accuracy is no longer improving / getting worse
-                    # decrease the learning rate 
-                    # don't decrease the learning rate anymore than 3 times
+                        # check accuracy is no longer improving / getting worse
+                        # decrease the learning rate 
+                        # don't decrease the learning rate anymore than 3 times
                         num_learning_rate_decreases +=1
                         FLAGS.learning_rate = FLAGS.learning_rate/10
-                        
+                  
+                    prev_validation_accuracy = validation_accuracy
+
+                     
+                    
                     print('step {}, accuracy on validation set : {}'.format(step, validation_accuracy))
                     validation_writer.add_summary(validation_summary_str, step)
                     
@@ -334,11 +341,16 @@ def main(_):
         data_test = data[1]
         test_images = [data_test[i][0] for i in range(0, 12630)]
         test_labels = [data_test[i][1] for i in range(0,12630)]
-        # lets not whiten the images for now
         test_whiten_images = whitening(test_images, train_mean, train_std)
         
-        test_accuracy, test_summary_str = sess.run([accuracy, test_summary], feed_dict={x_image: test_images, y_: test_labels})
-        test_whiten_accuracy, test_whiten_summary_str = sess.run([accuracy, test_summary], feed_dict{x_image: test_whiten_images, y_: test_labels})
+        test_images = sess.run(test_images, feed_dict={x: test_images})
+        test_whiten_images = sess.run(test_white_images, feed_dict={x_image: test_whiten_images})
+        
+        test_accuracy, test_summary_str = sess.run([accuracy, test_summary],
+                                                    feed_dict={x_image: test_images, y_: test_labels})
+                                                    
+        test_whiten_accuracy, test_whiten_summary_str = sess.run([accuracy, test_summary], 
+                                                                feed_dict={x_image: test_whiten_images, y_: test_labels})
 
         #test = batch_generator(data, 'test')
         #for (test_images, test_labels) in test:
@@ -356,6 +368,8 @@ def main(_):
         test_whiten_writer.flush()
         
         print('test set: accuracy on test set: %0.3f' % test_accuracy)
+        print('test whitened set: accuracy on test set: %0.3f' % test_whiten_accuracy)
+
         print('model saved to ' + checkpoint_path)
 
         # close FileWriters
