@@ -278,7 +278,7 @@ def main(_):
         prev_validation_accuracy = 0
         num_learning_rate_decreases = 0
 
-        for _ in FLAGS.training_epochs:
+        for _ in range(FLAGS.training_epochs):
             train = batch_generator(data,'train')
             for train_images, train_labels in train:
                 
