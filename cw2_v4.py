@@ -128,6 +128,7 @@ def whitening(image, mean, std):
     """ 
     subtract the mean divide by standard deviation
     img_whitten = (image-mean)/std
+    Depracated
     """
     a = np.array(image)
     img_whiten = np.divide(np.subtract(a, mean), std)
@@ -244,7 +245,6 @@ def main(_):
         white_image_train_writer = tf.summary.FileWriter(run_log_dir + "_train_white", sess.graph)
         test_writer = tf.summary.FileWriter(run_log_dir + "_test", sess.graph)
         test_whiten_writer = tf.summary.FileWriter(run_log_dir + "_test_whiten", sess.graph)
-
         
         # Train and validation
 
@@ -333,8 +333,6 @@ def main(_):
                     
                 step += 1
 
-            
-               
         # Testing
         
         # read in the entire test set rather than batch
