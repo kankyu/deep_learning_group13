@@ -260,7 +260,6 @@ def main(_):
         white_image_train_writer = tf.summary.FileWriter(run_log_dir + "_train_white", sess.graph)
         test_writer = tf.summary.FileWriter(run_log_dir + "_test", sess.graph)
         test_whiten_writer = tf.summary.FileWriter(run_log_dir + "_test_whiten", sess.graph)
-
         
         # Train and validation
 
@@ -279,7 +278,7 @@ def main(_):
         prev_validation_accuracy = 0
         num_learning_rate_decreases = 0
 
-        for _ in range(FLAGS.training_epochs):
+        for _ in FLAGS.training_epochs:
             train = batch_generator(data,'train')
             for train_images, train_labels in train:
                 
@@ -310,7 +309,6 @@ def main(_):
                     #batch_count = 0
                     #validation = batch_generator(data, 'test')
                     #for (test_images, test_labels) in validation:
-                    
 
                     train_writer.add_summary(train_summary_str, step) 
                     white_image_train_writer.add_summary(train_summary_whiten_str, step)
@@ -331,11 +329,8 @@ def main(_):
                   
                     prev_validation_accuracy = validation_accuracy
 
-                     
-                    
                     print('step {}, accuracy on validation set : {}'.format(step, validation_accuracy))
                     validation_writer.add_summary(validation_summary_str, step)
-                    
 
                 # Save the model checkpoint periodically.
                 if step % FLAGS.save_model_frequency == 0 or (step + 1) == FLAGS.max_steps:
@@ -367,15 +362,6 @@ def main(_):
         test_whiten_accuracy, test_whiten_summary_str = sess.run([accuracy, test_summary], 
                                                                 feed_dict={x_image: test_whiten_images, y_: test_labels})
 
-        #test = batch_generator(data, 'test')
-        #for (test_images, test_labels) in test:
-            #test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x_image: test_images, y_: test_labels})
-        
-            #batch_count += 1
-            #test_accuracy += test_accuracy_temp
-
-        #test_accuracy = test_accuracy / batch_count
-        
         test_writer.add_summary(test_summary_str, step)
         test_whiten_writer.add_summary(test_whiten_summary_str, step)
         
