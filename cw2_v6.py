@@ -65,10 +65,12 @@ def deepnn(x_image, class_count=43):
     # First convolutional layer - maps one image to 32 feature maps.
     with tf.variable_scope('Conv_1'):
         W_conv1 = weight_variable([5, 5, FLAGS.img_channels, 32])
-        #Note bias is not needed when using batch normalisation
-        #Also apply relu function after batch normalisation
-        #b_conv1 = bias_variable([32])
-        #h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+        
+        b_conv1 = bias_variable([32])
+        #conv1_bn = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+        # Comment out below up to h_pool1 and uncomment above line
+        
+        
         h_conv1 = conv2d(x_image, W_conv1)
 
         batch_mean1, batch_var1 = tf.nn.moments(h_conv1, [0])
@@ -82,7 +84,10 @@ def deepnn(x_image, class_count=43):
     with tf.variable_scope('Conv_2'):
         # Second convolutional layer -- maps 32 feature maps to 32.
         W_conv2 = weight_variable([5, 5, 32, 32])
-        #b_conv2 = bias_variable([32])
+        b_conv2 = bias_variable([32])
+        #conv2_bn = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+        # Comment out below up to h_pool2 and uncomment above line
+        
         h_conv2 = conv2d(h_pool1, W_conv2)
 
         batch_mean2, batch_var2 = tf.nn.moments(h_conv2, [0])
@@ -96,7 +101,11 @@ def deepnn(x_image, class_count=43):
     with tf.variable_scope('Conv_3'):
         # Third convolutional layer -- maps 32 feature maps to 64.
         W_conv3 = weight_variable([5, 5, 32, 64])
-        #b_conv3 = bias_variable([64])
+        b_conv3 = bias_variable([64])
+        
+        #conv3_bn = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+        # Comment out below up to h_pool3 and uncomment above line
+        
         h_conv3 = conv2d(h_pool2, W_conv3)
 
         batch_mean3, batch_var3 = tf.nn.moments(h_conv3, [0])
@@ -163,10 +172,10 @@ def weight_variable(shape):
 def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
     initial = tf.constant(0.1, shape=shape)
-    #return tf.Variable(initial, name='biases')
-    Bias = tf.get_variable("biases", shape=shape,
-			initializer=tf.contrib.layers.xavier_initializer())
-    return Bias
+    return tf.Variable(initial, name='biases')
+    #Bias = tf.get_variable("biases", shape=shape,
+	#		initializer=tf.contrib.layers.xavier_initializer())
+    #return Bias
 
 
 def whitening(image, mean, std):
@@ -238,7 +247,7 @@ def main(_):
         # Build the graph for the deep net
         y_conv, img_summary = deepnn(x_image)
 
-
+        tf.trainable_variables()
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
         correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 
@@ -252,6 +261,8 @@ def main(_):
     accuracy_summary = tf.summary.scalar("Accuracy", accuracy)
     #learning_rate_summary = tf.summary.scalar("Learning Rate", decayed_learning_rate)
     #img_summary = tf.summary.image('Input Images', x_image)
+    
+    
 
     # summaries
     loss_summary = tf.summary.scalar("Loss", cross_entropy)
@@ -297,13 +308,35 @@ def main(_):
         num_learning_rate_decreases = 0
         
         # Number of values to avg for decay rate. I think this can be better explained.
-        num_avg = 3 
+        num_avg = 4
         prev_validation_accuracy = np.zeros(num_avg)
         validation_acc = np.zeros(num_avg)
                 
         for _ in range(FLAGS.training_epochs):
             train = batch_generator(data,'train')
             for train_images, train_labels in train:
+                
+                j=0
+                for v in tf.trainable_variables():
+                    if 'weights' in v.name:
+                        if j==0:
+                            Conv1=v
+                            j += 1
+                        if j==1:
+                            Conv2=v
+                            j += 1
+                        if j==2:
+                            Conv3=v
+                            j += 1
+                        if j==3:
+                            FC1=v
+                            j += 1
+                        if j==4:
+                            FC2=v
+                            j += 1
+                        if j==5:
+                            FC3=v
+                            j += 1
                 
                 train_images_whiten = whitening(train_images, train_mean, train_std)
                 
@@ -323,6 +356,34 @@ def main(_):
                 # havne't implemented weight decay yet I need to see the weight variable value first before implementing decay
                 # a = sess.run([weights1, weights2, weights3])
                 # print(a)   
+                #"conv1/weights"
+                #Conv_1/weights
+                #v = tf.get_variable("v", shape=(), initializer=tf.zeros_initializer())
+                #last_W_conv1 = tf.get_variable("Conv_1/W_conv1")
+                #print(last_W_conv1)
+                
+                j=0
+                for v in tf.trainable_variables():
+                    if 'weights' in v.name:
+                        if j==0:
+                            v -= 0.0001 * FLAGS.learning_rate * Conv1
+                            j += 1
+                        if j==1:
+                            v -= 0.0001 * FLAGS.learning_rate * Conv2
+                            j += 1
+                        if i==2:
+                            v -= 0.0001 * FLAGS.learning_rate * Conv3
+                            j += 1
+                        if j==3:
+                            v -= 0.0001 * FLAGS.learning_rate * FC1
+                            j += 1
+                        if j==4:
+                            v -= 0.0001 * FLAGS.learning_rate * FC2
+                            j += 1
+                        if j==5:
+                            v -= 0.0001 * FLAGS.learning_rate * FC3
+                            j += 1            
+                        
                 
                 # Validation: Monitoring accuracy using validation set
                 

@@ -123,18 +123,40 @@ def deepnn(x_image, class_count=43):
     logits = tf.layers.dense(inputs=fc2, units=class_count, name='logit')
     return logits
 
-def whitening(image):
+def whitening(image, mean, std):
     """ subtract the mean and standard deviation """
-    return tf.image.per_image_standardization(image)
+    img_whiten = tf.div(tf.subtract(image, mean), std)
+    return img_whiten
+    
+def calculate_mean_std(train_imgs):
+    a = np.array(train_imgs)
+    b = a.sum(axis=0)
+    c = b.sum(axis=0)
+    d = c.sum(axis=0)
+    N = 32*32*39209
+    mean = d/(N)
+    
+    squares = np.square(a)
+    squares_b = squares.sum(axis=0)
+    squares_c = squares_b.sum(axis=0)
+    squares_d = squares_c.sum(axis=0)
+    variance = squares_d/N - np.square(mean)
+    std = np.sqrt(variance)
+    
+    return mean, std
     
 def main(_):
     tf.reset_default_graph()
 
-    print('hello world')
-
     #Import Data
-    batch_data = np.load('gtsrb_dataset.npz')
+    #batch_data = np.load('gtsrb_dataset.npz')
     data = pickle.load(open('dataset.pkl', 'rb'))
+    train = data[0]
+    train_images = [train[i][0] for i in range(0, 39209)]
+    
+    # Calculate the rgb tuple of mean and std
+    # Now need a way to subtract this from every image we use
+    train_mean, train_std = calculate_mean_std(train_images)
 
     with tf.variable_scope('inputs'):
         # Create the model
@@ -143,7 +165,7 @@ def main(_):
         y_ = tf.placeholder(tf.float32, [None, FLAGS.num_classes])
         
         # subtract the mean and deviation 
-        x_image = tf.map_fn(lambda x: whitening(x), x_image)
+        x_image = tf.map_fn(lambda x: whitening(x, train_mean, train_std), x_image)
         
         # maybe we will need this.
         # weight = tf.Variable(<initial-value>, name='Weight')

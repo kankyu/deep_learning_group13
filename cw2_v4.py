@@ -366,7 +366,7 @@ def main(_):
         test_whiten_writer.flush()
         
         print('test set: accuracy on test set: %0.3f' % test_accuracy)
-        print('test whitened set: accuracy on test set: %0.3f' % test_whiten_accuracy)
+        print('test set: accuracy on test whitened set: %0.3f' % test_whiten_accuracy)
 
         print('model saved to ' + checkpoint_path)
 
